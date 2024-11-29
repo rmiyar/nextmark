@@ -31,7 +31,7 @@ def actualizar_tabla(tabla):
             tabla.delete(fila)
 
         historial = cargar_historial()
-        print(f"Historial cargado: {historial}")  # Debug
+        #print(f"Historial cargado: {historial}")  # Debug
 
         for registro in historial:
             if len(registro) == 4:

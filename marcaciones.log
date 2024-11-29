@@ -50,3 +50,17 @@
 2024-11-24 23:52:31,674 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-24, Hora=23:52:30
 2024-11-27 00:22:24,304 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-27, Hora=00:22:22
 2024-11-27 00:22:45,022 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-27, Hora=00:22:43
+2024-11-28 21:27:01,173 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-28, Hora=21:26:59
+2024-11-29 08:48:25,820 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-29, Hora=08:48:24
+2024-11-29 09:05:18,852 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-29, Hora=09:05:17
+2024-11-29 11:03:49,163 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:03:55,369 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:04:03,353 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:05:36,977 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:09:48,692 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:26:19,979 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:35:46,523 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:40:07,150 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 11:43:02,330 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 12:19:45,968 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-29 12:20:33,178 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-29, Hora=12:20:31
