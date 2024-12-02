@@ -1,9 +1,10 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
+import csv
 from db import obtener_marcaciones_filtradas  # Nueva función en db.py
-from config import COLOR_FONDO, COLOR_HEADER, COLOR_TEXTO_HEADER, COLOR_BOTON_VOLVER, COLOR_BOTON_ENTRADA
+from config import COLOR_FONDO, COLOR_HEADER, COLOR_TEXTO_HEADER, COLOR_BOTON_VOLVER, COLOR_BOTON_DESCARGAR
 from datetime import datetime
-
+from db import conectar_bd
 
 def actualizar_hora(label_hora):
     """
@@ -13,6 +14,30 @@ def actualizar_hora(label_hora):
     label_hora.config(text=ahora)
     label_hora.after(1000, actualizar_hora, label_hora)
 
+
+
+def obtener_nombres_completos():
+    """
+    Consulta los nombres completos de los usuarios desde la tabla users.
+    """
+    connection = conectar_bd()
+    if not connection:
+        return []
+
+    try:
+        query = """
+        SELECT CONCAT(nombre, ' ', apellido) AS nombre_completo
+        FROM users
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            resultados = [row[0] for row in cursor.fetchall()]
+        return resultados
+    except Exception as e:
+        print(f"Error al obtener nombres completos: {e}")
+        return []
+    finally:
+        connection.close()    
 
 def actualizar_tabla(tabla, filtros):
     """
@@ -29,6 +54,25 @@ def actualizar_tabla(tabla, filtros):
     except Exception as e:
         messagebox.showerror("Error", f"No se pudo actualizar la tabla: {e}")
 
+def descargar_marcaciones(filtros):
+    """
+    Descarga las marcaciones filtradas en un archivo CSV.
+    """
+    try:
+        marcaciones = obtener_marcaciones_filtradas(**filtros)
+        if not marcaciones:
+            messagebox.showinfo("Información", "No hay datos para descargar.")
+            return
+
+        archivo = "marcaciones.csv"
+        with open(archivo, mode="w", newline="", encoding="utf-8") as f:
+            writer = csv.writer(f)
+            writer.writerow(["Nombre Completo", "Tipo de Marcación", "Fecha", "Hora"])  # Encabezados
+            writer.writerows(marcaciones)
+
+        messagebox.showinfo("Éxito", f"Marcaciones descargadas en {archivo}.")
+    except Exception as e:
+        messagebox.showerror("Error", f"No se pudo descargar las marcaciones: {e}")
 
 def mostrar_pantalla_administrador(root, volver_menu):
     """
@@ -58,9 +102,12 @@ def mostrar_pantalla_administrador(root, volver_menu):
     filtros_frame = tk.Frame(frame, bg=COLOR_FONDO)
     filtros_frame.pack(pady=10, padx=20, fill="x")
 
-    tk.Label(filtros_frame, text="Usuario:", bg=COLOR_FONDO, font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky="w")
-    usuario_entry = tk.Entry(filtros_frame, font=("Arial", 12))
-    usuario_entry.grid(row=0, column=1, padx=5, pady=5, sticky="w")
+    tk.Label(filtros_frame, text="Nombre Completo:", bg=COLOR_FONDO, font=("Arial", 12)).grid(row=0, column=0, padx=5, pady=5, sticky="w")
+
+    # Crear el Combobox para nombres completos
+    nombres_completos = obtener_nombres_completos()  # Obtener nombres desde la base de datos
+    usuario_combobox = ttk.Combobox(filtros_frame, font=("Arial", 12), values=nombres_completos, state="readonly")
+    usuario_combobox.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
     tk.Label(filtros_frame, text="Tipo de Marcación:", bg=COLOR_FONDO, font=("Arial", 12)).grid(row=0, column=2, padx=5, pady=5, sticky="w")
     tipo_combobox = ttk.Combobox(filtros_frame, font=("Arial", 12), values=["", "entrada", "salida"])
@@ -71,27 +118,27 @@ def mostrar_pantalla_administrador(root, volver_menu):
     dia_entry.grid(row=0, column=5, padx=5, pady=5, sticky="w")
 
     # Botón para aplicar filtros y actualizar la tabla
-    btn_descargar = tk.Button(
+    btn_actualizar = tk.Button(
         filtros_frame,
-        text="Descargar Marcaciones",
-        bg=COLOR_BOTON_ENTRADA,
+        text="Aplicar Filtros",
+        bg=COLOR_BOTON_DESCARGAR,
         fg="white",
         font=("Arial", 14, "bold"),
         command=lambda: actualizar_tabla(tabla, {
-            "usuario": usuario_entry.get().strip(),
+            "usuario": usuario_combobox.get().strip(),
             "tipo": tipo_combobox.get().strip(),
             "dia": dia_entry.get().strip(),
         }),
         width=25,
         relief="flat",
     )
-    btn_descargar.grid(row=1, column=0, columnspan=2, pady=10, sticky="w")  # Alineado a la izquierda
+    btn_actualizar.grid(row=1, column=0, columnspan=2, pady=10, sticky="w")
 
     # Tabla para mostrar las marcaciones
     tabla_frame = tk.Frame(frame, bg=COLOR_FONDO)
     tabla_frame.pack(pady=20, fill="both", expand=True)
 
-    columnas = ("Usuario", "Tipo de Marcación", "Fecha", "Hora")
+    columnas = ("Nombre Completo", "Tipo de Marcación", "Fecha", "Hora")
     tabla = ttk.Treeview(tabla_frame, columns=columnas, show="headings", height=15)
     for col in columnas:
         tabla.heading(col, text=col)

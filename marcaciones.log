@@ -64,3 +64,39 @@
 2024-11-29 11:43:02,330 - WARNING - La marcación ya existe o hubo un error en la base de datos.
 2024-11-29 12:19:45,968 - WARNING - La marcación ya existe o hubo un error en la base de datos.
 2024-11-29 12:20:33,178 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-29, Hora=12:20:31
+2024-11-30 07:37:57,011 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=07:37:55
+2024-11-30 07:38:00,691 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=07:37:59
+2024-11-30 07:48:47,938 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=07:48:46
+2024-11-30 07:48:52,612 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=07:48:51
+2024-11-30 07:53:54,890 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=07:53:53
+2024-11-30 07:53:59,383 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=07:53:57
+2024-11-30 12:45:19,263 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=12:45:14
+2024-11-30 12:45:35,625 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=12:45:31
+2024-11-30 12:50:05,195 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-30 12:52:32,850 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-30 12:53:51,585 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=12:53:47
+2024-11-30 13:12:46,981 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=13:12:43
+2024-11-30 13:26:42,194 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-30 13:31:53,309 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-30 13:31:56,640 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-11-30 13:35:26,145 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=13:35:23
+2024-11-30 13:35:33,061 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=13:35:29
+2024-11-30 13:37:28,789 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=13:37:25
+2024-11-30 14:15:14,538 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-11-30, Hora=14:15:09
+2024-11-30 14:16:45,051 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=14:16:38
+2024-11-30 14:17:12,648 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-11-30, Hora=14:17:06
+2024-12-01 14:46:14,261 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-12-01 14:46:18,113 - WARNING - La marcación ya existe o hubo un error en la base de datos.
+2024-12-01 18:06:43,055 - INFO - Marcación guardada localmente: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=18:06:41
+2024-12-01 18:06:43,059 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=18:06:41
+2024-12-01 18:06:47,565 - INFO - Marcación guardada localmente: Usuario=miyar, Tipo=salida, Fecha=2024-12-01, Hora=18:06:46
+2024-12-01 18:06:47,565 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-12-01, Hora=18:06:46
+2024-12-01 18:19:09,614 - WARNING - Marcación duplicada o error en la base de datos para Usuario=miyar, Tipo=entrada.
+2024-12-01 23:30:49,722 - INFO - Marcación guardada localmente: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=23:30:48
+2024-12-01 23:30:49,724 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=23:30:48
+2024-12-01 23:30:54,022 - INFO - Marcación guardada localmente: Usuario=miyar, Tipo=salida, Fecha=2024-12-01, Hora=23:30:52
+2024-12-01 23:30:54,036 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-12-01, Hora=23:30:52
+2024-12-01 23:37:39,428 - WARNING - Marcación duplicada o error en la base de datos para Usuario=miyar, Tipo=entrada.
+2024-12-01 23:37:43,389 - WARNING - Marcación duplicada o error en la base de datos para Usuario=miyar, Tipo=entrada.
+2024-12-01 23:39:13,435 - INFO - Marcación guardada localmente: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=23:39:12
+2024-12-01 23:39:13,435 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-12-01, Hora=23:39:12

@@ -7,3 +7,4 @@ COLOR_TEXTO_HEADER = "white"  # Texto en la banda superior
 COLOR_BOTON_ENTRADA = "#4caf50"  # Botón de entrada
 COLOR_BOTON_SALIDA = "#f44336"  # Botón de salida
 COLOR_BOTON_VOLVER = "#1976d2"  # Botón para volver
+COLOR_BOTON_DESCARGAR = "#455A64"  # Botón para descargar marcaciones

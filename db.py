@@ -3,14 +3,18 @@ import uuid
 from datetime import datetime
 import os
 import configparser
+from dotenv import load_dotenv
+
+# Cargar variables de entorno desde .env
+load_dotenv()
 
 # Configuración de conexión a la base de datos
 db_config = {
-    "dbname": "postgres",
-    "user": "postgres.wzqrdlomiherqivaegho",
-    "password": "53kkMYf!PDc$sHG",  # Reemplaza con tu contraseña
-    "host": "aws-0-us-west-1.pooler.supabase.com",
-    "port": 6543
+    "dbname": os.getenv("DB_NAME"),
+    "user": os.getenv("DB_USER"),
+    "password": os.getenv("DB_PASSWORD"),
+    "host": os.getenv("DB_HOST"),
+    "port": int(os.getenv("DB_PORT"))
 }
 
 def leer_usuario_config():
@@ -40,7 +44,6 @@ def conectar_bd():
         print(f"Error al conectar a la base de datos: {e}")
         return None
 
-
 def guardar_marcacion(user_windows, tipo, fecha, hora):
     """
     Guarda una marcación en la base de datos.
@@ -48,7 +51,7 @@ def guardar_marcacion(user_windows, tipo, fecha, hora):
     """
     connection = conectar_bd()
     if not connection:
-        return False  # No se pudo conectar a la base de datos
+        return False
 
     try:
         # Leer los datos del usuario desde config.ini
@@ -68,10 +71,9 @@ def guardar_marcacion(user_windows, tipo, fecha, hora):
             cursor.execute(query_usuario, (nombre, apellido))
             usuario_data = cursor.fetchone()
 
-        # Validar si se obtuvo un usuario
         if not usuario_data:
             print(f"No se encontró el usuario con nombre: {nombre} y apellido: {apellido}")
-            return False  # Detener si no se encuentra el usuario
+            return False
 
         usuario_id, nombre_completo = usuario_data
         print(f"Usuario encontrado: usuario_id={usuario_id}, nombre_completo={nombre_completo}")
@@ -82,8 +84,6 @@ def guardar_marcacion(user_windows, tipo, fecha, hora):
         VALUES (%s, %s, %s, %s, %s, %s)
         """
         with connection.cursor() as cursor:
-            # Depuración: Imprimir los valores antes de ejecutar
-            print(f"Insertando: usuario_id={usuario_id}, user_windows={user_windows}, nombre_completo={nombre_completo}, fecha={fecha}, hora={hora}, tipo={tipo}")
             cursor.execute(query_marcacion, (usuario_id, user_windows, nombre_completo, fecha, hora, tipo))
         connection.commit()
         print(f"Marcación guardada en la base de datos: {user_windows}, {tipo}, {fecha}, {hora}")
@@ -94,19 +94,17 @@ def guardar_marcacion(user_windows, tipo, fecha, hora):
     finally:
         connection.close()
 
-
-
 def obtener_marcaciones():
     """
     Consulta todas las marcaciones desde la base de datos PostgreSQL.
     """
     connection = conectar_bd()
     if not connection:
-        return []  # Devuelve una lista vacía si no se puede conectar
+        return []
 
     try:
         query = """
-        SELECT nombre_usuario, tipo_marcacion, fecha, hora_entrada 
+        SELECT nombre_completo, tipo_marcacion, fecha, hora_entrada 
         FROM historial_marcaciones 
         ORDER BY fecha DESC, hora_entrada DESC;
         """
@@ -120,7 +118,6 @@ def obtener_marcaciones():
     finally:
         connection.close()
 
-
 def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
     """
     Consulta marcaciones desde la base de datos aplicando filtros.
@@ -129,12 +126,10 @@ def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
     if not connection:
         return []
 
-    # Convertir cadenas vacías a None
-    usuario = usuario.strip() if usuario and usuario.strip() else None
-    tipo = tipo.strip() if tipo and tipo.strip() else None
-    dia = dia.strip() if dia and dia.strip() else None
+    usuario = usuario.strip() if usuario else None
+    tipo = tipo.strip() if tipo else None
+    dia = dia.strip() if dia else None
 
-    # Convertir el formato de fecha de DD-MM-YYYY a YYYY-MM-DD
     if dia:
         try:
             dia = datetime.strptime(dia, "%d-%m-%Y").strftime("%Y-%m-%d")
@@ -144,15 +139,16 @@ def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
 
     try:
         query = """
-        SELECT nombre_usuario, tipo_marcacion, fecha, hora_entrada
+        SELECT nombre_completo, tipo_marcacion, fecha, hora_entrada
         FROM historial_marcaciones
-        WHERE (%s IS NULL OR nombre_usuario = %s)
+        WHERE (%s IS NULL OR LOWER(nombre_completo) LIKE LOWER(%s))
           AND (%s IS NULL OR tipo_marcacion = %s)
           AND (%s IS NULL OR fecha = %s)
         ORDER BY fecha DESC, hora_entrada DESC;
         """
         with connection.cursor() as cursor:
-            cursor.execute(query, (usuario, usuario, tipo, tipo, dia, dia))
+            like_usuario = f"%{usuario}%" if usuario else None
+            cursor.execute(query, (usuario, like_usuario, tipo, tipo, dia, dia))
             resultados = cursor.fetchall()
         return resultados
     except Exception as e:
@@ -161,42 +157,111 @@ def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
     finally:
         connection.close()
 
-
-def registrar_usuario(nombre, apellido):
+def registrar_usuario(nombre, apellido, user_windows):
     """
-    Registra un usuario en la tabla users.
-    El campo "user" será el nombre del usuario de Windows actualmente logueado.
+    Registra un usuario en la tabla `users`.
     """
     connection = conectar_bd()
     if not connection:
-        return False  # No se pudo conectar a la base de datos
+        print("Error: No se pudo establecer conexión con la base de datos.")
+        return False
 
     try:
-        # Obtener el usuario actual de Windows
-        user = os.getlogin()
+        # Convertir nombre y apellido a mayúsculas
+        nombre = nombre.upper()
+        apellido = apellido.upper()
 
         # Verificar si el usuario ya existe
-        verificar_query = "SELECT id FROM users WHERE nombre = %s AND apellido = %s AND user = %s"
+        verificar_query = "SELECT id FROM users WHERE user_windows = %s"
         with connection.cursor() as cursor:
-            cursor.execute(verificar_query, (nombre, apellido, user))
+            cursor.execute(verificar_query, (user_windows,))
             resultado = cursor.fetchone()
 
         if resultado:
-            print(f"El usuario {nombre} {apellido} con el usuario del sistema {user} ya está registrado.")
-            return True  # El usuario ya existe, no se hace nada
+            print(f"El usuario {user_windows} ya está registrado con ID {resultado[0]}.")
+            return True  # Si ya existe, no se hace nada
 
         # Registrar un nuevo usuario
         registrar_query = """
-        INSERT INTO users (nombre, apellido, "user")
-        VALUES (%s, %s, %s)
+        INSERT INTO users (nombre, apellido, user_windows)
+        VALUES (%s, %s, %s) RETURNING id
         """
         with connection.cursor() as cursor:
-            cursor.execute(registrar_query, (nombre, apellido, user))
-        connection.commit()
-        print(f"Usuario registrado exitosamente: {nombre} {apellido} ({user})")
+            print(f"Registrando usuario: {nombre} {apellido} ({user_windows})")
+            cursor.execute(registrar_query, (nombre, apellido, user_windows))
+            user_id = cursor.fetchone()[0]
+            connection.commit()
+
+        print(f"Usuario registrado exitosamente con ID {user_id}.")
         return True
     except Exception as e:
         print(f"Error al registrar usuario: {e}")
         return False
     finally:
         connection.close()
+
+
+
+def asignar_a_grupo(user_windows, group_name="Usuarios"):
+    """
+    Asigna un usuario al grupo especificado.
+    Crea el grupo si no existe y asegura que solo se asigne una vez.
+    """
+    connection = conectar_bd()
+    if not connection:
+        print("Error: No se pudo establecer conexión con la base de datos.")
+        return False
+
+    try:
+        # Obtener el usuario ID
+        query_usuario = "SELECT id FROM users WHERE user_windows = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query_usuario, (user_windows,))
+            usuario = cursor.fetchone()
+
+        if not usuario:
+            print(f"Usuario con user_windows={user_windows} no encontrado.")
+            return False
+
+        user_id = usuario[0]
+
+        # Verificar si el grupo existe
+        query_grupo = "SELECT id FROM groups WHERE nombre = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query_grupo, (group_name,))
+            grupo = cursor.fetchone()
+
+        if not grupo:
+            # Crear el grupo si no existe
+            query_crear_grupo = "INSERT INTO groups (nombre) VALUES (%s) RETURNING id"
+            with connection.cursor() as cursor:
+                cursor.execute(query_crear_grupo, (group_name,))
+                group_id = cursor.fetchone()[0]
+                connection.commit()
+        else:
+            group_id = grupo[0]
+
+        # Verificar si el usuario ya está asignado al grupo
+        query_asignacion = "SELECT 1 FROM user_groups WHERE user_id = %s AND group_id = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query_asignacion, (user_id, group_id))
+            asignacion = cursor.fetchone()
+
+        if asignacion:
+            print(f"Usuario {user_id} ya está asignado al grupo '{group_name}'.")
+            return True
+
+        # Asignar el usuario al grupo
+        query_asignar = "INSERT INTO user_groups (user_id, group_id) VALUES (%s, %s)"
+        with connection.cursor() as cursor:
+            cursor.execute(query_asignar, (user_id, group_id))
+            connection.commit()
+
+        print(f"Usuario {user_id} asignado al grupo '{group_name}'.")
+        return True
+    except Exception as e:
+        print(f"Error al asignar usuario al grupo: {e}")
+        return False
+    finally:
+        connection.close()
+
