@@ -1,3 +1,0 @@
-miyar,entrada,2024-12-01,23:30:48
-miyar,salida,2024-12-01,23:30:52
-miyar,entrada,2024-12-01,23:39:12

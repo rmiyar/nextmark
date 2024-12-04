@@ -4,9 +4,17 @@ from datetime import datetime
 import os
 import configparser
 from dotenv import load_dotenv
+import sys
+
+def resource_path(relative_path):
+    """Devuelve la ruta correcta, ya sea en desarrollo o en un ejecutable."""
+    if hasattr(sys, "_MEIPASS"):  # PyInstaller almacena recursos en `_MEIPASS`
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 # Cargar variables de entorno desde .env
-load_dotenv()
+env_path = resource_path(".env")
+load_dotenv(env_path)
 
 # Configuración de conexión a la base de datos
 db_config = {
@@ -17,27 +25,13 @@ db_config = {
     "port": int(os.getenv("DB_PORT"))
 }
 
-def leer_usuario_config():
-    """
-    Lee los datos del usuario desde config.ini.
-    """
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
-    config = configparser.ConfigParser()
-    config.read(config_path)
-
-    try:
-        nombre = config["USUARIO"]["nombre"]
-        apellido = config["USUARIO"]["apellido"]
-        return nombre, apellido
-    except KeyError as e:
-        print(f"Error al leer el archivo de configuración: {e}")
-        return None, None
 
 def conectar_bd():
     """
     Establece una conexión con la base de datos.
     """
     try:
+        print(f"Intentando conectar con la base de datos usando: {db_config}")
         connection = psycopg2.connect(**db_config)
         return connection
     except Exception as e:
@@ -46,53 +40,46 @@ def conectar_bd():
 
 def guardar_marcacion(user_windows, tipo, fecha, hora):
     """
-    Guarda una marcación en la base de datos.
-    Relaciona la marcación con el usuario basado en los datos de config.ini.
+    Guarda una marcación en la base de datos asociada al usuario correspondiente.
     """
     connection = conectar_bd()
     if not connection:
         return False
 
     try:
-        # Leer los datos del usuario desde config.ini
-        nombre, apellido = leer_usuario_config()
-
-        if not nombre or not apellido:
-            print("No se encontraron datos válidos en config.ini.")
-            return False
-
-        # Obtener usuario_id y nombre_completo de la tabla users
+        # Verificar si el usuario existe y obtener su información
         query_usuario = """
         SELECT id, CONCAT(nombre, ' ', apellido) AS nombre_completo
         FROM users
-        WHERE nombre = %s AND apellido = %s
+        WHERE user_windows = %s
         """
         with connection.cursor() as cursor:
-            cursor.execute(query_usuario, (nombre, apellido))
+            cursor.execute(query_usuario, (user_windows,))
             usuario_data = cursor.fetchone()
 
         if not usuario_data:
-            print(f"No se encontró el usuario con nombre: {nombre} y apellido: {apellido}")
+            print(f"Usuario con user_windows={user_windows} no encontrado.")
             return False
 
         usuario_id, nombre_completo = usuario_data
-        print(f"Usuario encontrado: usuario_id={usuario_id}, nombre_completo={nombre_completo}")
 
-        # Insertar la marcación en historial_marcaciones
+        # Insertar la nueva marcación
         query_marcacion = """
-        INSERT INTO historial_marcaciones (usuario_id, user_windows, nombre_completo, fecha, hora_entrada, tipo_marcacion)
+        INSERT INTO historial_marcaciones (usuario_id, user_windows, nombre_completo, tipo_marcacion, fecha, hora_entrada)
         VALUES (%s, %s, %s, %s, %s, %s)
         """
         with connection.cursor() as cursor:
-            cursor.execute(query_marcacion, (usuario_id, user_windows, nombre_completo, fecha, hora, tipo))
+            cursor.execute(query_marcacion, (usuario_id, user_windows, nombre_completo, tipo, fecha, hora))
         connection.commit()
-        print(f"Marcación guardada en la base de datos: {user_windows}, {tipo}, {fecha}, {hora}")
+        print(f"Marcación guardada: {user_windows}, {tipo}, {fecha}, {hora}")
         return True
     except Exception as e:
         print(f"Error al guardar la marcación: {e}")
         return False
     finally:
         connection.close()
+
+
 
 def obtener_marcaciones():
     """
@@ -132,10 +119,12 @@ def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
 
     if dia:
         try:
-            dia = datetime.strptime(dia, "%d-%m-%Y").strftime("%Y-%m-%d")
+            # Validar que la fecha está en el formato correcto (YYYY-MM-DD)
+            datetime.strptime(dia, "%Y-%m-%d")
         except ValueError:
-            print(f"Formato de fecha inválido: {dia}. Use DD-MM-YYYY.")
+            print(f"Formato de fecha inválido: {dia}. Use YYYY-MM-DD.")
             dia = None
+
 
     try:
         query = """
@@ -157,9 +146,71 @@ def obtener_marcaciones_filtradas(usuario=None, tipo=None, dia=None):
     finally:
         connection.close()
 
-def registrar_usuario(nombre, apellido, user_windows):
+
+
+def obtener_marcaciones_admin(usuario=None, tipo=None, desde=None, hasta=None):
     """
-    Registra un usuario en la tabla `users`.
+    Obtiene las marcaciones filtradas con privilegios de administrador.
+    Permite filtrar por usuario, tipo de marcación y rango de fechas.
+    """
+    connection = conectar_bd()
+    if not connection:
+        return []
+
+    try:
+        query = """
+        SELECT 
+            CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo, 
+            h.tipo_marcacion, 
+            h.fecha, 
+            h.hora_entrada
+        FROM historial_marcaciones h
+        JOIN users u ON h.usuario_id = u.id
+        WHERE 1=1
+        """
+        parametros = []
+
+        # Filtrar por usuario
+        if usuario:
+            query += " AND CONCAT(u.nombre, ' ', u.apellido) = %s"
+            parametros.append(usuario)
+
+        # Filtrar por tipo de marcación
+        if tipo:
+            query += " AND h.tipo_marcacion = %s"
+            parametros.append(tipo)
+
+        # Convertir fechas al formato esperado por la base de datos (YYYY-MM-DD)
+        if desde and hasta:
+            try:
+                # Las fechas ya vienen en el formato correcto
+                query += " AND h.fecha BETWEEN %s AND %s"
+                parametros.extend([desde, hasta])
+            except ValueError:
+                print("Error: Las fechas no tienen el formato correcto (DD-MM-YYYY).")
+                return []
+
+        # Imprimir la consulta SQL y los parámetros para depuración
+        print("Consulta SQL generada:")
+        print(query)
+        print("Parámetros:")
+        print(parametros)
+
+        with connection.cursor() as cursor:
+            cursor.execute(query, parametros)
+            resultados = cursor.fetchall()
+
+        return resultados
+    except Exception as e:
+        print(f"Error al obtener marcaciones para administrador: {e}")
+        return []
+    finally:
+        connection.close()
+
+
+def registrar_usuario(nombre, apellido, user_windows, group_name="Usuarios"):
+    """
+    Registra un usuario en la tabla `users` y lo asigna a un grupo solo si es la primera vez.
     """
     connection = conectar_bd()
     if not connection:
@@ -192,6 +243,10 @@ def registrar_usuario(nombre, apellido, user_windows):
             user_id = cursor.fetchone()[0]
             connection.commit()
 
+        # Asignar al grupo solo si es la primera vez
+        if not asignar_a_grupo(user_windows, group_name):
+            print(f"No se pudo asignar al grupo {group_name}. Verifique la base de datos.")
+
         print(f"Usuario registrado exitosamente con ID {user_id}.")
         return True
     except Exception as e:
@@ -199,6 +254,7 @@ def registrar_usuario(nombre, apellido, user_windows):
         return False
     finally:
         connection.close()
+
 
 
 
@@ -265,3 +321,77 @@ def asignar_a_grupo(user_windows, group_name="Usuarios"):
     finally:
         connection.close()
 
+def obtener_ultima_marcacion(usuario_windows):
+    """
+    Obtiene la última marcación del usuario desde la tabla historial_marcaciones.
+    """
+    connection = conectar_bd()
+    if not connection:
+        return None
+
+    try:
+        query = """
+        SELECT tipo_marcacion, fecha, hora_entrada
+        FROM historial_marcaciones
+        WHERE user_windows = %s
+        ORDER BY fecha DESC, hora_entrada DESC
+        LIMIT 1
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query, (usuario_windows,))
+            return cursor.fetchone()  # Devuelve la última marcación o None
+    except Exception as e:
+        print(f"Error al obtener la última marcación: {e}")
+        return None
+    finally:
+        connection.close()
+
+
+def es_primera_vez_usuario(user_windows):
+    """
+    Verifica si el usuario de Windows ya está registrado en la base de datos.
+    """
+    connection = conectar_bd()
+    if not connection:
+        print("Error al conectar con la base de datos.")
+        return False
+
+    try:
+        query = "SELECT 1 FROM users WHERE user_windows = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (user_windows,))
+            resultado = cursor.fetchone()
+        return resultado is None  # Si no hay resultados, es la primera vez
+    except Exception as e:
+        print(f"Error al verificar usuario en la base de datos: {e}")
+        return False
+    finally:
+        connection.close()
+
+
+def autenticar_administrador(user_windows, password):
+    """
+    Verifica si un usuario es administrador y sus credenciales son válidas.
+    """
+    connection = conectar_bd()
+    if not connection:
+        return False
+
+    try:
+        query = """
+        SELECT u.id
+        FROM users u
+        INNER JOIN user_groups ug ON u.id = ug.user_id
+        INNER JOIN groups g ON ug.group_id = g.id
+        WHERE u.user_windows = %s AND u.contraseña = %s AND g.nombre = 'Administradores';
+        """
+        with connection.cursor() as cursor:
+            cursor.execute(query, (user_windows, password))
+            resultado = cursor.fetchone()
+
+        return resultado is not None
+    except Exception as e:
+        print(f"Error al autenticar administrador: {e}")
+        return False
+    finally:
+        connection.close()
