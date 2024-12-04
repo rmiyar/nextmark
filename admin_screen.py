@@ -70,8 +70,8 @@ def actualizar_tabla_admin(tabla, filtros):
         hasta = filtros.get("hasta")
         if desde and hasta:
             try:
-                datetime.strptime(desde, "%d-%m-%Y")
-                datetime.strptime(hasta, "%d-%m-%Y")
+                desde_db = datetime.strptime(desde, "%d-%m-%Y").strftime("%Y-%m-%d")
+                hasta_db = datetime.strptime(hasta, "%d-%m-%Y").strftime("%Y-%m-%d")
             except ValueError:
                 messagebox.showerror("Error", "Las fechas deben estar en formato DD-MM-YYYY.")
                 return
@@ -79,8 +79,8 @@ def actualizar_tabla_admin(tabla, filtros):
         marcaciones = obtener_marcaciones_admin(
             usuario=filtros.get("usuario"),
             tipo=filtros.get("tipo"),
-            desde=desde,
-            hasta=hasta,
+            desde=desde_db,
+            hasta=hasta_db,
         )
         for registro in marcaciones:
             if len(registro) == 4:
@@ -302,13 +302,19 @@ def mostrar_tab2(tab):
     """
     frame = tk.Frame(tab, bg=COLOR_FONDO)
     frame.pack(pady=20, padx=20, fill="both", expand=True)
+    filtros_frame = tk.Frame(tab, bg=COLOR_FONDO)
+    filtros_frame.pack(pady=10, padx=20, fill="x")
 
     # Filtros
     tk.Label(frame, text="Nombre Completo:", bg=COLOR_FONDO, font=("Arial", 12)).grid(
         row=0, column=0, padx=5, pady=5, sticky="w"
     )
-    nombres_completos = obtener_nombres_completos()
-    usuario_combobox = ttk.Combobox(frame, font=("Arial", 12), values=["Todos"] + nombres_completos, state="readonly")
+
+    # Obtener nombres completos y filtrar valores vacíos
+    nombres_completos = [nombre for nombre in obtener_nombres_completos() if nombre.strip()]
+    nombres_completos.insert(0, "Todos")  # Agregar opción "Todos"
+
+    usuario_combobox = ttk.Combobox(frame, font=("Arial", 12), values=nombres_completos, state="readonly")
     usuario_combobox.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
     tk.Label(frame, text="Desde (DD-MM-YYYY):", bg=COLOR_FONDO, font=("Arial", 12)).grid(
@@ -363,7 +369,7 @@ def mostrar_tab2(tab):
             return
 
         if usuario_seleccionado == "Todos":
-            usuarios = obtener_nombres_completos()
+            usuarios = [nombre for nombre in obtener_nombres_completos() if nombre.strip()]
         else:
             usuarios = [usuario_seleccionado]
 
@@ -422,4 +428,3 @@ def mostrar_tab2(tab):
         relief="flat",
     )
     btn_exportar.grid(row=3, column=2, columnspan=2, pady=10)
-

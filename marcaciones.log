@@ -11,3 +11,4 @@
 2024-12-03 23:07:24,934 - ERROR - Error al calcular horas trabajadas: time data 'entrada 16:59:25' does not match format '%Y-%m-%d %H:%M:%S'
 2024-12-03 23:18:26,156 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-12-03, Hora=23:18:23
 2024-12-03 23:20:53,590 - INFO - Marcación registrada: Usuario=miyar, Tipo=salida, Fecha=2024-12-03, Hora=23:20:50
+2024-12-03 23:54:07,097 - INFO - Marcación registrada: Usuario=miyar, Tipo=entrada, Fecha=2024-12-03, Hora=23:54:04
